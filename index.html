@@ -1,0 +1,1121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>메이플 알리미</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+  :root {
+    --bg: #f8f9f6; --card: #fdfcf7; --line: #dce3d8; --text: #16302b; --muted: #5f6b63;
+    --link: #277266; --switch: #152d28; --ok: #2f9e5b; --danger: #b3332e; --warn: #c27c0e;
+    --pill-bg: #f7ece9; --pill-line: #e4c6c0; --pill-text: #7e322d; --soft: #eef2ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --card: #19211d; --line: #2c3832; --text: #e3ebe5; --muted: #93a39a;
+      --link: #6cc2b2; --switch: #6cc2b2; --pill-bg: #2e1d1b; --pill-line: #5a2f2a; --pill-text: #f0a69e; --soft: #1f2a25;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+  button, input, select { font: inherit; color: inherit; }
+  .shell { max-width: 1240px; margin: 0 auto; padding: 14px 20px 48px; }
+
+  /* 상단 바 */
+  .topbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 0 12px; border-bottom: 1px solid var(--line); }
+  .topbar h1 { font-size: 21.6px; font-weight: 700; margin: 0; flex: 1; letter-spacing: -0.02em; }
+  .share-pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 12px; border-radius: 999px; border: 1px solid var(--pill-line); background: var(--pill-bg); color: var(--pill-text); cursor: pointer; font-size: 12.5px; font-weight: 800; }
+  .share-pill .act { padding: 2px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--pill-line); font-weight: 700; }
+  .share-pill.live { background: color-mix(in srgb, var(--ok) 12%, var(--card)); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); color: var(--ok); }
+  .share-pill.live .act { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+
+  .subbar { display: flex; align-items: center; gap: 16px; padding: 12px 0; font-size: 13px; }
+  .subbar .title { font-weight: 700; flex: 1; }
+  .subbar input[type=range] { width: 110px; accent-color: var(--switch); vertical-align: middle; }
+
+  /* 알림 카드 */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .card.alert { border-color: var(--danger); box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 25%, transparent); }
+  .card-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .card-head h2 { font-size: 16px; font-weight: 700; margin: 0; }
+  .card-head .spacer { flex: 1; }
+  .hdot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); flex: none; }
+  .hdot.on { background: var(--ok); }
+  .link { background: none; border: 0; padding: 0; cursor: pointer; color: var(--link); font-size: 13px; font-weight: 600; }
+  .link:hover { text-decoration: underline; }
+  .icon-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid transparent; background: none; cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1; }
+  .icon-btn:hover { background: var(--soft); }
+  .btn { padding: 4px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); cursor: pointer; font-size: 13px; font-weight: 600; }
+  .btn:hover { background: var(--soft); }
+
+  /* 항목 행: 스위치 | 이름 | 값 칸들 | 상태 | 펼치기 */
+  .item { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
+  .item-row { display: grid; grid-template-columns: 92px minmax(150px, 1.4fr) repeat(4, minmax(78px, 1fr)) minmax(150px, 1.3fr) 28px; align-items: center; gap: 10px; }
+  @media (max-width: 900px) { .item-row { grid-template-columns: 1fr 1fr; } .item-row .status { grid-column: 1 / -1; } }
+  .sw { display: inline-flex; align-items: center; gap: 8px; font-size: 12.2px; font-weight: 800; cursor: pointer; }
+  input.switch { appearance: none; width: 40px; height: 24px; border-radius: 9999px; background: var(--line); border: 1px solid var(--line); position: relative; cursor: pointer; margin: 0; transition: background .15s; flex: none; }
+  input.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  input.switch:checked { background: var(--switch); border-color: var(--switch); }
+  input.switch:checked::after { transform: translateX(16px); }
+  .ident { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; font-weight: 600; }
+  .thumb { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); object-fit: contain; flex: none; }
+  .stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .lbl { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .val { font-size: 14px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  input.inline { width: 36px; border: 1px solid transparent; border-radius: 7px; background: none; padding: 0 4px; margin-right: 2px; font-weight: 650; -moz-appearance: textfield; }
+  input.inline::-webkit-inner-spin-button, input.inline::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input.inline:hover, input.inline:focus { border-color: var(--line); background: var(--bg); }
+  input.inline.wide { width: 64px; }
+  .pillbox { display: inline-block; padding: 7px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; font-weight: 650; text-align: center; background: var(--card); }
+  .pillbox.hit { border-color: var(--danger); color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--card)); }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 12.2px; min-width: 0; }
+  .status strong { font-weight: 800; }
+  .status small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 500; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--muted); }
+  .dot.ok { background: var(--ok); } .dot.off { background: var(--danger); } .dot.warn { background: var(--warn); }
+  .swatch { display: inline-block; width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--line); vertical-align: -3px; margin-right: 6px; }
+
+  /* 자동으로 찾은 버프 목록 */
+  .tracked { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 12px; }
+  .tracked:empty { display: none; }
+  .tbuff { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+  .tbuff .stat { flex: 1; }
+
+  /* 펼친 설정 */
+  .more { margin-top: 12px; padding: 12px; border-radius: 8px; background: var(--bg); border: 1px dashed var(--line); }
+  .more[hidden] { display: none; }
+  .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 20px; }
+  .field { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+  .field input[type=number], .field input[type=text], .field select { width: 90px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--text); }
+  .field input[type=text].long, .field select { width: 170px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .detail, .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+  /* 영역 지정 창 (정지 스냅샷) */
+  #setup { position: fixed; inset: 0; background: rgba(10, 20, 16, .78); z-index: 10; display: flex; flex-direction: column; padding: 12px; gap: 8px; }
+  #setup[hidden] { display: none; }
+  .setup-head { display: flex; gap: 8px; align-items: center; }
+  #banner { flex: 1; background: var(--card); color: var(--text); padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+  .setup-scroll { flex: 1; overflow: auto; }
+  #overlay { display: block; margin: 0 auto; }
+  #overlay.picking { cursor: crosshair; }
+
+  #log { max-height: 220px; overflow: auto; font-size: 12px; font-family: ui-monospace, Consolas, monospace; margin-top: 8px; }
+  #log div { padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .steps { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+  .steps li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <h1>🍁 메이플 알리미</h1>
+    <button class="link" id="btnHelp">사용 가이드</button>
+    <button class="share-pill" id="btnShare"><span id="shareText">● 화면 공유 필요</span><span class="act" id="shareAction">시작</span></button>
+  </header>
+
+  <section class="card" id="help" hidden>
+    <div class="card-head"><h2>사용 가이드</h2></div>
+    <ol class="steps">
+      <li>오른쪽 위 <b>시작</b>으로 메이플 창을 공유하면 바로 감시가 시작됩니다. 공유를 끝내면 감시도 꺼집니다. (게임 화면은 따로 보여주지 않아요)</li>
+      <li>룬 알림은 <b>미니맵 지정</b>만 하면 됩니다. 지정을 누르면 그 순간의 스냅샷이 뜨고, 드래그해서 고르면 됩니다.</li>
+      <li>부스터는 화면 위쪽 가운데의 타이머 숫자를, 버프는 오른쪽 위 버프칸에서 <b>오른쪽 끝 ">" 화살표 기준 3번째 줄</b> 아이콘들의 남은 시간 숫자를 <b>자동으로</b> 읽습니다.</li>
+      <li>버프 숫자를 읽으려면 게임 설정 > UI > <b>퀵슬롯&amp;버프 시간표시</b>를 <b>[중앙, 크게]</b>로, 표시방식을 <b>[분 + 초]</b>로 맞춰 주세요.</li>
+      <li>이 탭은 최소화하지 말고 별도 창으로 띄워 두세요.</li>
+    </ol>
+  </section>
+
+  <div class="subbar">
+    <span class="title">알림</span>
+    <label>🔊 마스터 볼륨 <input type="range" id="volume" min="0" max="1" step="0.05"> <b id="volumeLabel">100%</b></label>
+    <button class="link" id="btnTestVoice">음성 테스트</button>
+  </div>
+
+  <!-- 룬 알림 -->
+  <section class="card" id="runePanel">
+    <div class="card-head">
+      <i class="hdot" id="dot-rune"></i><h2>룬 알림</h2>
+      <button class="link" data-region="minimap">미니맵 지정</button>
+      <button class="link" data-region="view">현재 화면으로 확인</button>
+      <span class="spacer"></span>
+    </div>
+    <div class="item">
+      <div class="item-row">
+        <label class="sw"><input type="checkbox" class="switch" id="runeOn"><span id="runeOnLabel">켜짐</span></label>
+        <div class="ident"><span><span class="swatch" id="runeSwatch"></span>미니맵 <span id="mmInfo">미지정</span></span></div>
+        <div><span class="pillbox" id="runeDetect">감지 없음</span></div>
+        <div class="stat"><span class="lbl">반복</span><span class="val"><input class="inline" type="number" id="runeRepeat" min="0">초</span></div>
+        <div class="stat"><span class="lbl">연속 판정</span><span class="val"><input class="inline" type="number" id="runeFrames" min="1" max="20">회</span></div>
+        <div class="stat"><span class="lbl">마지막 알림</span><span class="val" id="runeLast">--</span></div>
+        <div class="status" id="runeState"></div>
+        <button class="icon-btn" data-more="runeMore" aria-label="설정 펼치기">›</button>
+      </div>
+      <div class="more" id="runeMore" hidden>
+        <div class="fields">
+          <label class="field">룬 색 <span>rgb(201, 118, 225) 고정</span></label>
+          <label class="field">색 허용 오차 <input type="number" id="runeTol" min="1" max="200"></label>
+          <label class="field">덩어리 최소 픽셀 수 <input type="number" id="runeMinPx" min="1"></label>
+          <label class="field">덩어리 최대 픽셀 수 <input type="number" id="runeMaxPx" min="1"></label>
+          <label class="field">덩어리 최대 크기(px) <input type="number" id="runeMaxSize" min="2"></label>
+          <label class="field">음성 문구 <input type="text" class="long" id="runeMsg"></label>
+        </div>
+        <p class="hint">미니맵은 헤더·버튼을 빼고 지도 부분만 잡아 주세요.</p>
+        <p class="detail" id="runeDetail"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 부스터 종료 알림 -->
+  <section class="card" id="boosterPanel">
+    <div class="card-head">
+      <i class="hdot" id="dot-booster"></i><h2>부스터 종료 알림</h2>
+      <span class="spacer"></span>
+    </div>
+    <div class="item">
+      <div class="item-row">
+        <label class="sw"><input type="checkbox" class="switch" id="boostOn"><span id="boostOnLabel">켜짐</span></label>
+        <div class="ident">화면 상단 부스터 타이머</div>
+        <div class="stat"><span class="lbl">판독값</span><span class="val" id="boostRaw">--</span></div>
+        <div class="stat"><span class="lbl">알림 시점</span><span class="val"><input class="inline" type="number" id="boostWarn" min="0">초 전</span></div>
+        <div class="stat"><span class="lbl">남은 시간</span><span class="val" id="boostLeft">--</span></div>
+        <div class="stat"><span class="lbl">마지막 알림</span><span class="val" id="boostLast">--</span></div>
+        <div class="status" id="boostState"></div>
+        <button class="icon-btn" data-more="boostMore" aria-label="설정 펼치기">›</button>
+      </div>
+      <div class="more" id="boostMore" hidden>
+        <div class="actions">
+          <button class="btn" id="btnBoostRefind">다시 찾기</button>
+          <button class="btn" data-region="booster">타이머 위치 직접 지정</button>
+          <button class="btn" id="btnBoostAuto">자동 찾기로 되돌리기</button>
+        </div>
+        <div class="fields">
+          <label class="field">종료 시 알림 <input type="checkbox" class="switch" id="boostEnd"></label>
+        </div>
+        <p class="hint">화면 위쪽 가운데 “남은시간 92.79 초” 전광판 숫자를 자동으로 찾습니다. 다른 숫자를 잡으면 위치를 직접 지정해 주세요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 버프 종료 알림 -->
+  <section class="card" id="buffPanel">
+    <div class="card-head">
+      <i class="hdot" id="dot-buffs"></i><h2>버프 종료 알림</h2>
+      <span class="spacer"></span>
+    </div>
+    <div class="item">
+      <div class="item-row">
+        <label class="sw"><input type="checkbox" class="switch" id="buffOn"><span id="buffOnLabel">켜짐</span></label>
+        <div class="ident">버프칸 3번째 화살표 줄</div>
+        <div class="stat"><span class="lbl">알림 시점</span><span class="val"><input class="inline" type="number" id="buffWarn" min="0">초 전</span></div>
+        <div class="stat"><span class="lbl">함께 꺼지는 버프</span><span class="val"><input class="inline" type="number" id="buffMinCount" min="1" max="12">개 이상</span></div>
+        <div class="stat"><span class="lbl">추적 중</span><span class="val" id="buffCount">--</span></div>
+        <div class="stat"><span class="lbl">마지막 알림</span><span class="val" id="buffLast">--</span></div>
+        <div class="status" id="buffState"></div>
+        <button class="icon-btn" data-more="buffMore" aria-label="설정 펼치기">›</button>
+      </div>
+      <div class="more" id="buffMore" hidden>
+        <div class="actions">
+          <button class="btn" data-region="view">찾은 줄 확인</button>
+          <button class="btn" data-region="buffRegion">감시 줄 직접 지정</button>
+          <button class="btn" id="btnBuffAuto">자동(3번째 화살표)으로 되돌리기</button>
+          <button class="btn" id="btnDiag" title="지금 공유 화면(PNG)과 판별 결과(JSON)를 파일로 저장">진단 저장</button>
+        </div>
+        <p class="hint">오른쪽 끝 흰색 ">" 화살표를 위에서부터 세어 3번째 화살표가 있는 줄만 봅니다. 남은 시간은 4가지로 읽습니다: 아이콘 왼쪽 아래 작은 숫자(예: 21) = 남은 분, 가운데 큰 숫자 “3:05” = 분:초, “45” = 초, “7” = 초.</p>      </div>
+      <div class="tracked" id="buffList"></div>
+    </div>
+  </section>
+
+  <!-- 음성 / 감시 설정 -->
+  <section class="card">
+    <div class="card-head">
+      <i class="hdot on"></i><h2>음성 · 감시 설정</h2>
+      <span class="spacer"></span>
+      <button class="icon-btn" data-more="settingsMore" aria-label="설정 펼치기">›</button>
+    </div>
+    <div class="more" id="settingsMore" hidden>
+      <div class="fields">
+        <label class="field">목소리 <select id="voice"></select></label>
+        <label class="field">속도 <input type="number" id="rate" min="0.5" max="2" step="0.1"></label>
+        <label class="field">검사 주기(초) <input type="number" id="tick" min="0.3" step="0.1"></label>
+        <label class="field">숫자 밝기 기준(0–255) <input type="number" id="ocrThresh" min="50" max="250"></label>
+      </div>
+      <p class="hint">숫자 밝기 기준: 게임 숫자(흰 글씨)만 남기는 기준입니다. 판독값이 자주 틀리면 150~210 사이로 바꿔 보세요.</p>
+    </div>
+  </section>
+
+  <!-- 기록 -->
+  <section class="card">
+    <div class="card-head"><i class="hdot on"></i><h2>기록</h2></div>
+    <div id="log"></div>
+  </section>
+</div>
+
+<div id="setup" hidden>
+  <div class="setup-head">
+    <span id="banner"></span>
+    <button class="btn" id="btnRetake">다시 찍기</button>
+    <button class="btn" id="btnClose">닫기 (Esc)</button>
+  </div>
+  <div class="setup-scroll"><canvas id="overlay"></canvas></div>
+</div>
+<video id="video" autoplay muted playsinline hidden></video>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const video = $('video'), overlay = $('overlay'), octx = overlay.getContext('2d');
+const frame = document.createElement('canvas'), fctx = frame.getContext('2d', { willReadFrequently: true });
+// 영역 지정용 정지 화면 (지정 창을 열 때 한 번 찍음)
+const still = document.createElement('canvas'), sctx = still.getContext('2d', { willReadFrequently: true });
+const STREAK = 2;           // 룬이 사라졌다고 판단하기 위한 연속 판정 횟수
+const BUFF_OCR_MS = 2000;   // 버프 숫자 읽기 간격
+const MM_FIND_MS = 3000;    // 미니맵 테두리 다시 찾는 간격 (맵마다 미니맵 크기가 다름)
+const BUFF_GRACE_MS = 12000; // 버프 숫자가 안 보여도 이 시간까지는 가려진 것으로 보고 기다림
+const BUFF_GROUP_SEC = 10;   // 종료 N초 전 알림을 할 때, 이 시간 안에 이어서 끝나는 버프는 같은 알림으로 묶음
+const BUFF_ROW = 3;          // 오른쪽 끝 ">" 화살표 기준으로 위에서 몇 번째 줄을 감시할지
+
+// ---------- 설정 ----------
+const RUNE_COLOR = [201, 118, 225]; // 미니맵 룬 아이콘 색 (고정)
+let cfg = {
+  tick: 1, rate: 1.1, volume: 1, voice: '', ocrThresh: 185,
+  minimap: null, boosterBox: null, buffRegion: null, // boosterBox·buffRegion: 직접 지정했을 때만 (없으면 자동)
+  rune: { enabled: true, tol: 40, minPx: 6, maxPx: 400, maxSize: 30, frames: 3, repeat: 30, message: '룬이 생성되었습니다' },
+  booster: { enabled: true, warnBefore: 10, alertOnEnd: true },
+  buff: { enabled: true, warnBefore: 20, minCount: 1 }, // minCount: 이 개수 이상 함께 꺼질 때만 알림
+};
+try {
+  const s = JSON.parse(localStorage.getItem('maple-alarm') || 'null');
+  if (s) cfg = { ...cfg, ...s, rune: { ...cfg.rune, ...s.rune }, booster: { ...cfg.booster, ...s.booster }, buff: { ...cfg.buff, ...s.buff } };
+} catch {}
+// 예전 버전(아이콘 등록 방식)의 설정은 쓰지 않음
+delete cfg.rune.color; delete cfg.buffbar; delete cfg.buffs; delete cfg.buff.alertOnEnd; delete cfg.buff.minDuration;
+for (const k of ['id', 'name', 'tpl', 'thresh', 'duration', 'ignoreCenter', 'endFrames', 'repeatEnd']) delete cfg.booster[k];
+function save() { try { localStorage.setItem('maple-alarm', JSON.stringify(cfg)); } catch (e) { log('설정 저장 실패: ' + e.message); } }
+
+// 감시 중에만 쓰는 런타임 상태 (저장 안 함)
+const rune = { present: false, streak: 0, count: 0, lastAlert: 0, centroid: null, mm: null, mmAt: 0 };
+const booster = { box: null, value: null, lastSeen: 0, misses: 0, warned: false, raw: '', lastAlertAt: 0 };
+const buffs = { timers: [], lastRead: 0, lastAlertAt: 0, nextId: 1, arrows: [], row: null };
+
+// ---------- 화면 공유 ----------
+let stream = null, imageCapture = null, monitoring = false, timer = null, busy = false;
+const tickMs = () => Math.max(300, cfg.tick * 1000);
+async function startShare() {
+  // displaySurface: 'window' → 공유 선택 창에서 '창' 탭을 먼저 보여줌
+  try { stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 10, displaySurface: 'window' }, audio: false }); }
+  catch (e) { log('화면 공유 취소/실패: ' + e.message); return; }
+  const track = stream.getVideoTracks()[0];
+  track.addEventListener('ended', stopShare);
+  imageCapture = 'ImageCapture' in window ? new ImageCapture(track) : null;
+  video.srcObject = stream; await video.play();
+  log('화면 공유 시작');
+  startMonitor(); // 공유하는 동안은 항상 감시
+}
+function stopShare() {
+  stopMonitor();
+  stream?.getTracks().forEach(t => t.stop());
+  stream = null; imageCapture = null; video.srcObject = null;
+  setMode(null); log('화면 공유 종료'); renderStates();
+}
+$('btnShare').onclick = () => stream ? stopShare() : startShare();
+function renderShare() {
+  $('btnShare').classList.toggle('live', monitoring);
+  $('shareText').textContent = monitoring ? '● 감시 중' : '● 화면 공유 필요';
+  $('shareAction').textContent = monitoring ? '중지' : '시작';
+}
+
+// 프레임 한 장을 frame 캔버스로. 백그라운드 탭에서도 동작하도록 ImageCapture 우선 사용
+async function grab() {
+  let src = null;
+  if (imageCapture) {
+    try { src = await Promise.race([imageCapture.grabFrame(), new Promise((_, rej) => setTimeout(rej, 400))]); } catch {}
+  }
+  const w = src ? src.width : video.videoWidth, h = src ? src.height : video.videoHeight;
+  if (!w) return false;
+  if (frame.width !== w || frame.height !== h) { frame.width = w; frame.height = h; }
+  fctx.drawImage(src || video, 0, 0);
+  src?.close?.();
+  return true;
+}
+
+// 자동 영역: 버프는 화면 오른쪽 위, 부스터 타이머는 위쪽 가운데
+const autoBuffRegion = () => { const x = Math.round(frame.width * 0.55); return { x, y: 0, w: frame.width - x, h: Math.round(frame.height * 0.3) }; };
+const boosterSearchRegion = () => ({ x: Math.round(frame.width * 0.25), y: 0, w: Math.round(frame.width * 0.5), h: Math.round(frame.height * 0.3) });
+
+// ---------- 영역 지정 창 (정지 스냅샷) ----------
+let mode = null, drag = null;
+const MODE_TEXT = {
+  view: '현재 인식 영역 (보라: 미니맵, 주황: 부스터 타이머, 하늘: 찾은 화살표, 파랑: 감시하는 버프 줄, 초록: 읽은 숫자)',
+  minimap: '미니맵의 지도 부분을 드래그하세요',
+  booster: '부스터 타이머 숫자를 드래그하세요 (숫자보다 조금 넉넉하게)',
+  buffRegion: '감시할 버프 줄(아이콘 한 줄)을 드래그하세요',
+};
+async function snapshot() {
+  if (!(await grab())) { log('화면을 가져오지 못했습니다.'); return false; }
+  still.width = frame.width; still.height = frame.height; sctx.drawImage(frame, 0, 0);
+  return true;
+}
+async function setMode(m) {
+  if (m && !(await snapshot())) m = null;
+  mode = m; drag = null;
+  $('setup').hidden = !m;
+  if (m) { $('banner').textContent = MODE_TEXT[m.type]; overlay.classList.toggle('picking', m.type !== 'view'); fitOverlay(); }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') setMode(null); });
+$('btnClose').onclick = () => setMode(null);
+$('btnRetake').onclick = async () => { if (await snapshot()) fitOverlay(); };
+function needShare() { if (!stream) { log('먼저 화면 공유를 시작하세요.'); return true; } return false; }
+document.querySelectorAll('[data-region]').forEach(b => b.onclick = () => { if (!needShare()) setMode({ type: b.dataset.region }); });
+
+// 스냅샷을 창 폭에 맞춰 표시 (작은 아이콘을 잡기 쉽도록 원본보다 크게 늘리지는 않음)
+function fitOverlay() {
+  if (!mode || !still.width) return;
+  const box = document.querySelector('.setup-scroll');
+  const scale = Math.min(1, box.clientWidth / still.width);
+  overlay.width = Math.round(still.width * scale); overlay.height = Math.round(still.height * scale);
+  draw();
+}
+window.addEventListener('resize', fitOverlay);
+
+const k = () => overlay.width / (still.width || 1); // 원본 픽셀 → 표시 픽셀
+function toVideo(e) { const b = overlay.getBoundingClientRect(); return [(e.clientX - b.left) / k(), (e.clientY - b.top) / k()]; }
+function rectFromDrag(d) {
+  const x = Math.round(Math.max(0, Math.min(d.x0, d.x1))), y = Math.round(Math.max(0, Math.min(d.y0, d.y1)));
+  const w = Math.round(Math.min(still.width - x, Math.abs(d.x1 - d.x0))), h = Math.round(Math.min(still.height - y, Math.abs(d.y1 - d.y0)));
+  return { x, y, w, h };
+}
+
+overlay.addEventListener('pointerdown', e => {
+  if (!mode || mode.type === 'view') return;
+  const [x, y] = toVideo(e);
+  drag = { x0: x, y0: y, x1: x, y1: y }; overlay.setPointerCapture(e.pointerId);
+});
+overlay.addEventListener('pointermove', e => { if (!drag) return; [drag.x1, drag.y1] = toVideo(e); draw(); });
+overlay.addEventListener('pointerup', () => {
+  if (!drag || !mode) return;
+  const r = rectFromDrag(drag); drag = null;
+  if (r.w < 6 || r.h < 6) { draw(); return; }
+  if (mode.type === 'minimap') { cfg.minimap = r; log(`미니맵 영역 지정: ${r.w}×${r.h}`); }
+  else if (mode.type === 'booster') { cfg.boosterBox = r; resetBooster(); log(`부스터 타이머 위치 직접 지정: ${r.w}×${r.h}`); }
+  else if (mode.type === 'buffRegion') { cfg.buffRegion = r; buffs.timers = []; log(`버프 인식 영역 직접 지정: ${r.w}×${r.h}`); }
+  save(); setMode(null); renderStates();
+});
+
+function draw() {
+  if (!mode) return;
+  const s = k();
+  octx.drawImage(still, 0, 0, overlay.width, overlay.height);
+  const box = (r, color, label, width = 2) => {
+    if (!r) return;
+    octx.lineWidth = width; octx.strokeStyle = color; octx.strokeRect(r.x * s, r.y * s, r.w * s, r.h * s);
+    if (label) { octx.fillStyle = color; octx.font = 'bold 12px system-ui'; octx.fillText(label, r.x * s + 2, r.y * s - 4 < 10 ? r.y * s + r.h * s + 14 : r.y * s - 4); }
+  };
+  box(rune.mm || cfg.minimap, rune.present ? '#e5484d' : '#8e4ec6', rune.present ? '룬 감지!' : '미니맵');
+  if (rune.centroid) { octx.strokeStyle = '#e5484d'; octx.lineWidth = 2; octx.beginPath(); octx.arc(rune.centroid[0] * s, rune.centroid[1] * s, 10, 0, 7); octx.stroke(); }
+  if (frame.width) {
+    for (const a of buffs.arrows) box(a, '#5ac8fa', '', 1.5);
+    const row = cfg.buffRegion || buffs.row;
+    box(row || autoBuffRegion(), '#2f6fed', cfg.buffRegion ? '감시 줄(직접 지정)' : row ? `감시 줄(${BUFF_ROW}번째 화살표)` : `${BUFF_ROW}번째 화살표를 찾는 범위`, row ? 2 : 1);
+    const bb = cfg.boosterBox || booster.box;
+    box(bb || boosterSearchRegion(), '#f08c1a', bb ? '부스터 타이머' : '부스터 타이머 찾는 범위', bb ? 2 : 1);
+  }
+  for (const t of buffs.timers) box(t.box, '#2f9e5b', '', 1.5);
+  if (drag) { octx.setLineDash([5, 4]); box(rectFromDrag(drag), '#fff', '', 1.5); octx.setLineDash([]); }
+}
+
+// ---------- 버프 숫자: 게임 숫자 모양(0~9)과 대조 ----------
+// 버프 아이콘의 숫자는 높이 9px(칸 높이의 약 24%)짜리 고정 픽셀 글꼴이라, 한 글자씩 떼어 7×9 격자로 맞춘 뒤
+// 아래 모양과 가장 비슷한 숫자로 읽음. 모양은 실제 게임 스크린샷에서 뽑았음 ('#' = 노랑·흰 숫자 픽셀)
+const GLYPH_W = 7, GLYPH_H = 9;
+const DIGIT_SHAPES = {
+  0: ['.####../##..##./#....#./#....#./#....#./#....#./#....#./##..##./.####..'],
+  1: ['...##../..###../....#../....#../....#../....#../....#../....#../....#..', '....#../..###../....#../....#../....#../....#../....#../....#../....#..'],
+  2: ['.#####./.....#./.....#./.....#./....##./...##../..##.../..#..../.#####.', '.####../#....#./.....#./.....#./....#../..##.../.#...../#....../######.'],
+  3: ['.####../.....#./.....#./....##./..###../....##./.....#./....##./.####..'],
+  4: ['...##../...##../..###../..#.#../.#..#../##.##../######./....#../....#..', '....#../...##../..#.#../.#..#../#...#../######./....#../....#../....#..'], // 둘째: 왼쪽 아래 작은 숫자
+  5: ['.#####./.#...../.#...../.#...../.####../.....#./.....#./....##./.####..', '######./#....../#....../#####../.....#./.....#./.....#./#....#./.####..'],
+  6: ['.#####./##...../#....../#....../#####../#....#./#....#./##..##./.####..', '..###../.#...../#....../#####../#....#./#....#./#....#./#....#./.####..'],
+  7: ['######./....##./....#../...##../...#.../...#.../..#..../..#..../.#.....'],
+  8: ['.####../#....#./#....#./##..#../.####../##..##./#....#./##..##./.####..', '.####../#....#./#....#./#....#./.####../#....#./#....#./#....#./.####..'],
+  9: ['.####../#...##./#....#./#...##./.#####./.....#./.....#./....##./#####..', '.####../#....#./#....#./#....#./#....#./.#####./.....#./.....#./.####..'],
+};
+const DIGIT_BITS = Object.entries(DIGIT_SHAPES).flatMap(([d, list]) => list.map(s => ({ d, bits: s.replace(/\//g, '') })));
+const DIGIT_MAX_DIFF = 12; // 63칸 중 이보다 많이 다르면 숫자가 아닌 것으로 봄
+
+// 영역 b에서 숫자 픽셀(빨강·초록이 모두 밝은 노랑·흰색) 표시
+function digitMask(b) {
+  const T = cfg.ocrThresh - 35, d = fctx.getImageData(b.x, b.y, b.w, b.h).data, m = new Uint8Array(b.w * b.h);
+  for (let i = 0, p = 0; p < m.length; i += 4, p++) if (d[i] > T && d[i + 1] > T) m[p] = 1;
+  return m;
+}
+// 글자 덩어리 c를 7×9 격자로 맞춤 (높이 기준으로 크기를 맞추고 가로는 가운데 정렬)
+function glyphBits(m, W, c) {
+  const s = c.h / GLYPH_H, nw = Math.max(1, Math.min(GLYPH_W, Math.round(c.w / s))), off = Math.floor((GLYPH_W - nw) / 2);
+  let out = '';
+  for (let y = 0; y < GLYPH_H; y++) for (let x = 0; x < GLYPH_W; x++) {
+    const ix = x - off;
+    out += ix >= 0 && ix < nw && m[(c.y + Math.floor((y + 0.5) * s)) * W + c.x + Math.floor((ix + 0.5) * s)] ? '#' : '.';
+  }
+  return out;
+}
+function matchDigit(bits) {
+  let best = null, bestDiff = Infinity;
+  for (const t of DIGIT_BITS) {
+    let diff = 0;
+    for (let i = 0; i < bits.length && diff < bestDiff; i++) if (bits[i] !== t.bits[i]) diff++;
+    if (diff < bestDiff) { bestDiff = diff; best = t.d; }
+  }
+  return bestDiff <= DIGIT_MAX_DIFF ? best : null;
+}
+// 영역 b 안의 숫자 글자 덩어리들: 숫자 높이(칸 높이 digitH 기준)이고, 같은 높이에 나란히 놓인 것끼리 묶음
+function digitGroups(b, digitH) {
+  const m = digitMask(b);
+  const cand = components(m, b.w, b.h)
+    .map(c => ({ x: c.x0, y: c.y0, w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1, n: c.n }))
+    .filter(c => c.h >= digitH * 0.75 && c.h <= digitH * 1.25 && c.w >= 2 && c.w <= digitH * 0.8 && c.n >= 4)
+    .sort((a, c) => a.x - c.x);
+  const groups = [];
+  for (const c of cand) {
+    // 같은 줄(위·아래 끝이 1px 이내)이고 바로 옆이면 같은 숫자. 콜론을 사이에 둔 "5:59"는 틈이 7px이라 숫자 높이(9px)까지 허용
+    const g = groups.find(g => { const l = g[g.length - 1]; return Math.abs(l.y - c.y) <= 1 && Math.abs(l.y + l.h - c.y - c.h) <= 1 && c.x - (l.x + l.w) <= digitH; });
+    g ? g.push(c) : groups.push([c]);
+  }
+  return groups.map(g => ({ g, text: g.map(c => matchDigit(glyphBits(m, b.w, c))) }))
+    .filter(r => r.text.every(Boolean)).map(({ g, text }) => ({ text: text.join(''), x: g[0].x, y: g[0].y, w: g[g.length - 1].x + g[g.length - 1].w - g[0].x, h: g[0].h }));
+}
+// 왼쪽 아래 작은 숫자는 밝은 아이콘 그림 위에 겹쳐 있어 색만으로는 떼어 낼 수 없음.
+// 그래서 숫자 모양을 구석에 직접 대 보며 "숫자 픽셀은 밝고, 숫자를 두른 검은 테두리는 어두운" 자리를 찾음
+// (아이콘 그림에는 이런 테두리가 없어서 걸러짐)
+const DIGIT_TPL = Object.entries(DIGIT_SHAPES).flatMap(([d, list]) => list.map(s => {
+  const rows = s.split('/'), isCore = (x, y) => y >= 0 && y < GLYPH_H && x >= 0 && x < GLYPH_W && rows[y][x] === '#';
+  let x0 = GLYPH_W, x1 = -1;
+  rows.forEach(r => [...r].forEach((ch, x) => { if (ch === '#') { x0 = Math.min(x0, x); x1 = Math.max(x1, x); } }));
+  const core = [], ring = [];
+  for (let y = -1; y <= GLYPH_H; y++) for (let x = x0 - 1; x <= x1 + 1; x++) {
+    if (isCore(x, y)) core.push([x - x0, y]);
+    else if ([[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dx, dy]) => isCore(x + dx, y + dy))) ring.push([x - x0, y]);
+  }
+  return { d, w: x1 - x0 + 1, core, ring };
+}));
+const CORNER_MIN_SCORE = 0.85; // 숫자 픽셀·테두리 중 이 비율 이상이 맞아야 숫자로 인정
+function readCornerDigits(box) {
+  const s = box.h * 0.243 / GLYPH_H, T = cfg.ocrThresh - 35;
+  const d = fctx.getImageData(box.x, box.y, box.w, box.h).data;
+  const at = (x, y) => { x = Math.round(x); y = Math.round(y); return x < 0 || y < 0 || x >= box.w || y >= box.h ? -1 : (y * box.w + x) * 4; };
+  const score = (t, ox, oy) => {
+    let ok = 0;
+    for (const [x, y] of t.core) { const i = at(ox + x * s, oy + y * s); if (i >= 0 && d[i] > T && d[i + 1] > T) ok++; }
+    for (const [x, y] of t.ring) { const i = at(ox + x * s, oy + y * s); if (i < 0 || d[i] + d[i + 1] + d[i + 2] < 240) ok++; }
+    return ok / (t.core.length + t.ring.length);
+  };
+  const bestAt = (xs, ys) => {
+    let best = null;
+    for (const oy of ys) for (const ox of xs) for (const t of DIGIT_TPL) { const sc = score(t, ox, oy); if (!best || sc > best.sc) best = { t, ox, oy, sc }; }
+    return best && best.sc >= CORNER_MIN_SCORE ? best : null;
+  };
+  const range = (a, b) => { const r = []; for (let v = Math.round(a); v <= Math.round(b); v++) r.push(v); return r; };
+  // 첫 글자: 칸 왼쪽 아래 구역 어디든. 다음 글자: 바로 오른쪽 같은 높이 (최대 3글자)
+  let cur = bestAt(range(0, box.w * 0.4), range(box.h * 0.55, box.h - GLYPH_H * s));
+  if (!cur) return null;
+  let text = cur.t.d;
+  while (text.length < 3) {
+    const nx = cur.ox + cur.t.w * s;
+    const next = bestAt(range(nx, nx + 3 * s), [cur.oy]);
+    if (!next) break;
+    text += next.t.d; cur = next;
+  }
+  return text;
+}
+// 버프 시간 표시 4가지: 1) 왼쪽 아래 작은 숫자 → 남은 분(대략)  2) M:SS  3) SS  4) S  (2~4는 가운데 숫자, 정확한 초)
+// 콜론은 너무 작아 글자로 잡히지 않으므로 숫자 개수로 구분: 1~2개 = 초, 3~4개 = 분:초
+function digitsToTime(text, corner) {
+  if (corner) return { sec: +text * 60, min: +text, exact: false }; // 초는 모름
+  if (text.length <= 2) return { sec: +text, exact: true };
+  const m = +text.slice(0, -2), s = +text.slice(-2);
+  return s < 60 ? { sec: m * 60 + s, exact: true } : { sec: 0 };
+}
+
+// ---------- 부스터: 화면 위쪽 가운데 "남은시간 92.79 초" 타이머 ----------
+// 숫자가 7개의 막대(세그먼트)로 그려지는 전광판 글꼴이라, 막대 위치마다 켜졌는지만 보면 숫자를 정확히 알 수 있음
+//   막대 순서: 위, 왼쪽위, 오른쪽위, 가운데, 왼쪽아래, 오른쪽아래, 아래 (1 = 켜짐)
+const SEVEN_SEG = { '1110111': 0, '0010010': 1, '1011101': 2, '1011011': 3, '0111010': 4, '1101011': 5, '1101111': 6, '1010010': 7, '1111111': 8, '1111011': 9, '1110010': 7 };
+// 영역 r에서 노랑·주황 막대들을 찾아 "92.79" 같은 숫자로 읽음 → { sec, text, box } 또는 null
+function readSevenSeg(r) {
+  const d = fctx.getImageData(r.x, r.y, r.w, r.h).data, m = new Uint8Array(r.w * r.h);
+  for (let i = 0, p = 0; p < m.length; i += 4, p++) if (d[i] > 150 && d[i + 1] > 120 && d[i + 2] < d[i]) m[p] = 1;
+  const parts = components(m, r.w, r.h).filter(c => c.n >= 4).map(c => ({ x: c.x0, y: c.y0, w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 }));
+  const vbars = parts.filter(c => c.h >= c.w * 2 && c.h >= 6 && c.h <= 60);
+  if (vbars.length < 2) return null;
+  // 같은 높이에 나란히 놓인 세로 막대가 가장 많은 무리 = 타이머 숫자 줄
+  // (위·아래 세로 막대가 둘 다 켜지면 한 덩어리로 붙어 2배 길이가 되므로, 높이 비교는 둘 중 긴 쪽 기준)
+  let group = [];
+  for (const v of vbars) {
+    const g = vbars.filter(o => Math.abs(o.y + o.h / 2 - (v.y + v.h / 2)) <= Math.max(o.h, v.h) && Math.abs(o.x - v.x) <= v.h * 8);
+    if (g.length > group.length) group = g;
+  }
+  if (group.length < 2) return null;
+  const seg = Math.min(...group.map(v => v.h)); // 세로 막대 하나의 길이 ≈ 숫자 높이의 절반
+  const gx0 = Math.min(...group.map(v => v.x)) - seg * 2, gx1 = Math.max(...group.map(v => v.x + v.w)) + seg * 2;
+  const gy0 = Math.min(...group.map(v => v.y)) - seg * 0.5, gy1 = Math.max(...group.map(v => v.y + v.h)) + seg * 0.5;
+  const band = parts.filter(c => c.x >= gx0 && c.x + c.w <= gx1 && c.y >= gy0 && c.y + c.h <= gy1);
+  const bars = band.filter(c => Math.max(c.w, c.h) >= seg * 0.6);
+  if (!bars.length) return null;
+  const Y0 = Math.min(...bars.map(b => b.y)), Y1 = Math.max(...bars.map(b => b.y + b.h - 1)), h = Y1 - Y0;
+  // 막대들을 가로로 겹치는 것끼리 묶어 숫자 한 칸씩
+  const cells = [];
+  for (const b of bars.slice().sort((a, c) => a.x - c.x)) {
+    const last = cells[cells.length - 1];
+    if (last && b.x <= last.x1 + 1) last.x1 = Math.max(last.x1, b.x + b.w - 1); else cells.push({ x0: b.x, x1: b.x + b.w - 1 });
+  }
+  const W = Math.max(...cells.map(c => c.x1 - c.x0 + 1));
+  if (W < h * 0.35) return null;
+  const lit = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = Math.round(x + dx), yy = Math.round(y + dy); if (xx >= 0 && yy >= 0 && xx < r.w && yy < r.h && m[yy * r.w + xx]) return 1; } return 0; };
+  // 소수점: 숫자 아래쪽에 있는 작은 네모
+  const dots = band.filter(c => Math.max(c.w, c.h) < seg * 0.6 && c.w >= 2 && c.h >= 2 && c.y > Y0 + h * 0.7);
+  let text = '';
+  for (const c of cells) {
+    if (dots.some(dt => dt.x + dt.w <= c.x0 && !text.includes('.') && text)) text += '.';
+    const x1 = c.x1, x0 = x1 - W + 1, xm = (x0 + x1) / 2; // "1"처럼 좁은 숫자는 오른쪽 정렬로 보고 칸을 넓힘
+    const seg = [lit(xm, Y0 + 1), lit(x0 + 1, Y0 + h * 0.25), lit(x1 - 1, Y0 + h * 0.25), lit(xm, Y0 + h / 2),
+                 lit(x0 + 1, Y0 + h * 0.75), lit(x1 - 1, Y0 + h * 0.75), lit(xm, Y1 - 1)].join('');
+    if (SEVEN_SEG[seg] == null) return null; // 숫자 모양이 아니면 타이머가 아님
+    text += SEVEN_SEG[seg];
+  }
+  if (!/^\d+(\.\d+)?$/.test(text)) return null;
+  const x0 = Math.min(...band.map(b => b.x)), x1 = Math.max(...band.map(b => b.x + b.w));
+  return { sec: parseFloat(text), text, box: { x: r.x + x0, y: r.y + Y0, w: x1 - x0, h: h + 1 } };
+}
+function resetBooster() { Object.assign(booster, { box: null, value: null, lastSeen: 0, misses: 0, warned: false, raw: '' }); }
+const boosterLeft = (now) => booster.value == null ? null : booster.value - (now - booster.lastSeen) / 1000;
+function checkBooster(now) {
+  const B = cfg.booster;
+  if (!B.enabled) return;
+  // 직접 지정한 위치가 있으면 거기, 아니면 위쪽 가운데 전체에서 매번 찾음 (계산이 가벼워 위치를 고정할 필요 없음)
+  const read = readSevenSeg(cfg.boosterBox || boosterSearchRegion());
+  if (read && !booster.box) log(`⏱ 부스터 타이머 찾음 (${read.text}초)`);
+  if (read) booster.box = read.box;
+  const pred = boosterLeft(now);
+  // 예상보다 5초 넘게 작게 읽힌 값은 잘못 읽은 것으로 봄 (크게 읽히면 부스터를 다시 쓴 것)
+  if (read && (pred == null || read.sec >= pred - 5)) {
+    if (pred != null && read.sec > pred + 5) { booster.warned = false; log(`⏱ 부스터 갱신 (${read.text}초)`); }
+    Object.assign(booster, { value: read.sec, lastSeen: now, misses: 0, raw: read.text });
+  } else if (booster.value != null && ++booster.misses >= 4) {
+    // 4번 연속 못 읽으면 타이머가 사라진 것. 거의 끝나가던 중이었으면 종료 알림
+    const left = boosterLeft(now);
+    if (left <= 6 && B.alertOnEnd) { booster.lastAlertAt = now; speak('부스터 종료'); log('⏰ 부스터 종료'); flash('boosterPanel'); }
+    else log('부스터 타이머가 안 보임');
+    const keep = booster.lastAlertAt; resetBooster(); booster.lastAlertAt = keep;
+    return;
+  }
+  // 종료 N초 전 알림 (읽기 사이에도 남은 시간을 계산해서 늦지 않게)
+  const left = boosterLeft(now);
+  if (left != null && !booster.warned && B.warnBefore > 0 && left <= B.warnBefore && left > 0) {
+    booster.warned = true; booster.lastAlertAt = now;
+    speak(`부스터 종료 ${Math.max(1, Math.round(left))}초 전`); log(`⏳ 부스터 종료 ${Math.round(left)}초 전`); flash('boosterPanel');
+  }
+}
+
+// ---------- 버프: 오른쪽 끝 ">" 화살표 기준 N번째 줄의 남은 시간 숫자 ----------
+// 아이콘마다 숫자를 읽어 "타이머"로 추적. 아이콘 위치가 바뀌어도 남은 시간이 이어지는 것끼리 같은 버프로 봄
+// 남은 시간(초). 분 표시 버프는 초를 모르므로 표시된 분으로 대략 계산 (정렬·표시용, 알림에는 쓰지 않음)
+const buffLeft = (t, now) => t.exact ? t.value - (now - t.lastSeen) / 1000 : t.min * 60;
+
+// 줄 끝 화살표 탭의 흰색 ">" 꺾쇠를 찾음: 세로로 긴 작은 흰 덩어리가 같은 x에 세로로 늘어선 것
+function findArrows(area) {
+  const d = fctx.getImageData(area.x, area.y, area.w, area.h).data, mask = new Uint8Array(area.w * area.h);
+  for (let i = 0, p = 0; p < mask.length; i += 4, p++) if (d[i] > 170 && d[i + 1] > 185 && d[i + 2] > 195) mask[p] = 1;
+  const marks = components(mask, area.w, area.h).filter(c => {
+    const w = c.x1 - c.x0 + 1, h = c.y1 - c.y0 + 1, fill = c.n / (w * h);
+    return h >= 7 && h <= 30 && w >= 3 && w <= 16 && h >= w * 1.2 && fill >= 0.2 && fill <= 0.75;
+  }).map(c => ({ x: area.x + c.x0, y: area.y + c.y0, w: c.x1 - c.x0 + 1, h: c.y1 - c.y0 + 1 }));
+  // 화살표는 버프칸 맨 오른쪽에 같은 x, 같은 크기로 정확히 세로로 늘어서 있음.
+  // 같은 세로줄(x 차이 2px 이내)·거의 같은 크기로 2개 이상 모인 무리 중 가장 오른쪽 무리를 고름
+  // (가장 많이 모인 무리를 고르면 "11" 같은 숫자의 "1" 조각들이 화살표보다 많아서 잘못 고르는 경우 확인)
+  let best = [];
+  for (const m of marks) {
+    const col = marks.filter(o => Math.abs(o.x + o.w / 2 - (m.x + m.w / 2)) <= 2 && Math.abs(o.h - m.h) <= 2 && Math.abs(o.w - m.w) <= 1);
+    if (col.length >= 2 && (!best.length || m.x > best[0].x || m.x === best[0].x && col.length > best.length)) best = col;
+  }
+  return best.length >= 2 ? best.sort((a, b) => a.y - b.y) : [];
+}
+// 감시할 영역: 직접 지정했으면 그 영역, 아니면 BUFF_ROW번째 화살표 묶음.
+// 버프가 많으면 묶음이 화살표 없는 줄로 넘쳐 내려가므로(전체 줄 수가 3~4줄로 바뀜),
+// 화살표 줄부터 다음 화살표 직전까지를 한 묶음으로 봄. 다음 화살표가 없으면 최대 2줄 더.
+const MAX_SLOTS = 12; // 한 줄에 들어가는 아이콘 칸 수(넉넉히). 이보다 왼쪽은 게임 화면이라 읽지 않음
+function buffRow() {
+  if (cfg.buffRegion) { buffs.arrows = []; return { ...cfg.buffRegion, manual: true }; }
+  const area = autoBuffRegion(), arrows = findArrows(area);
+  buffs.arrows = arrows;
+  const a = arrows[BUFF_ROW - 1];
+  if (!a) return null;
+  // 화살표 꺾쇠 높이(기본 화면에서 16px)를 기준으로 줄 위치를 계산: 줄 간격 약 37px
+  const half = a.h * 1.15, cy = a.y + a.h / 2;
+  const gaps = arrows.slice(1).map((b, i) => b.y - arrows[i].y).filter(g => g > a.h * 1.8);
+  const pitchY = gaps.length ? Math.min(...gaps) : half * 2;
+  const next = arrows[BUFF_ROW];
+  const top = Math.max(0, Math.round(cy - half));
+  // 칸 가로 위치는 아이콘 사이 어두운 틈을 실제 화면에서 찾아 맞춤 (기본 화면: 32px 간격)
+  const { pitchX, iconRight } = alignSlots(a, top, pitchY, area.x);
+  const bottom = Math.min(frame.height, Math.round(next ? next.y + next.h / 2 - half : cy + half + pitchY * 2));
+  const left = Math.max(area.x, Math.round(iconRight - MAX_SLOTS * pitchX));
+  return { x: left, y: top, w: Math.max(1, iconRight - left), h: Math.max(1, bottom - top),
+           pitchX, pitchY, iconRight, bounded: !!next };
+}
+// 아이콘 사이 틈(세로로 어두운 선)이 같은 간격으로 늘어선 위치를 찾음.
+// iconRight = 마지막 아이콘 오른쪽의 틈, pitchX = 칸 가로 간격. 칸 k는 (iconRight-(k+1)·pitchX, iconRight-k·pitchX)
+function alignSlots(a, top, pitchY, minX) {
+  const y0 = top + 4, h = Math.max(4, Math.round(pitchY) - 8);
+  const x0 = Math.max(minX, Math.round(a.x - a.h * 2.2 * 6)), w = Math.max(1, a.x - x0);
+  const d = fctx.getImageData(x0, y0, w, h).data, prof = new Float32Array(w);
+  for (let x = 0; x < w; x++) { let s = 0; for (let y = 0; y < h; y++) { const i = (y * w + x) * 4; s += d[i] + d[i + 1] + d[i + 2]; } prof[x] = s / h / 3; }
+  const at = (x) => { const i = Math.round(x) - x0; return i >= 0 && i < w ? prof[i] : 255; };
+  let best = { score: Infinity, pitchX: a.h * 2, iconRight: Math.round(a.x - a.w * 1.3) };
+  for (let p = a.h * 1.8; p <= a.h * 2.2; p += 0.25) {
+    for (let g = a.x - a.w * 2.5; g <= a.x; g++) {
+      let s = 0; for (let k = 0; k < 5; k++) s += Math.min(at(g - k * p), at(g - k * p - 1)); // 틈은 1~2px 폭
+      if (s < best.score) best = { score: s, pitchX: p, iconRight: g };
+    }
+  }
+  return best;
+}
+// 이 줄에 아이콘이 몇 칸 있는지: 아이콘은 오른쪽부터 빈틈없이 붙어 있고 칸마다 왼쪽 경계에 어두운 틈이 있으므로,
+// 오른쪽부터 그 틈이 이어지는 데까지만 아이콘으로 봄 (그보다 왼쪽은 게임 화면이라 숫자를 읽지 않음)
+function iconCount(row, line, cols) {
+  const y0 = Math.round(row.y + line * row.pitchY + 4), h = Math.max(4, Math.round(row.pitchY) - 8);
+  if (y0 + h > frame.height) return 0;
+  const d = fctx.getImageData(row.x, y0, row.w + 2, h).data, W = row.w + 2;
+  const col = (x) => { // x열의 평균 밝기
+    const i0 = Math.round(x) - row.x; if (i0 < 0 || i0 >= W) return 255;
+    let s = 0; for (let y = 0; y < h; y++) { const i = (y * W + i0) * 4; s += d[i] + d[i + 1] + d[i + 2]; }
+    return s / h / 3;
+  };
+  let n = 0;
+  while (n < cols) {
+    const edge = row.iconRight - (n + 1) * row.pitchX; // n번째 칸의 왼쪽 경계
+    // 경계는 어둡고 바로 오른쪽(아이콘 안)은 밝아야 함. 배경이 통째로 어두운 곳은 밝기 차이가 없어서 걸러짐
+    const gap = Math.min(col(edge - 1), col(edge)), inside = Math.max(col(edge + 1), col(edge + 2));
+    if (gap > 70 || inside - gap < 40) break;
+    n++;
+  }
+  return n;
+}
+// 아이콘 칸(오른쪽 화살표 기준 격자)마다 숫자를 찾아 게임 숫자 모양과 대조
+// ---------- 진단 저장: 웹페이지가 실제로 받은 화면(PNG)과 그 화면의 판별 결과·설정(JSON)을 내려받음 ----------
+async function saveDiagnostics() {
+  if (needShare()) return;
+  if (!(await grab())) { log('화면을 가져오지 못했습니다.'); return; }
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
+  const download = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); };
+  // 1) 지금 화면 그대로 (무손실 PNG)
+  const png = await new Promise(res => frame.toBlob(res, 'image/png'));
+  download(png, `maple-diag-${stamp}.png`);
+  // 2) 같은 화면으로 다시 판별한 결과와 그때의 설정·상태
+  const area = autoBuffRegion(), row = buffRow(), slots = [];
+  const reads = row && !row.manual ? readSlots(row, slots) : [];
+  const track = stream.getVideoTracks()[0];
+  const info = {
+    savedAt: new Date().toString(),
+    frame: { width: frame.width, height: frame.height },
+    track: track.getSettings?.(),          // 공유 방식(창/화면), 해상도 등
+    devicePixelRatio: window.devicePixelRatio,
+    settings: { ocrThresh: cfg.ocrThresh, tick: cfg.tick, buffRegion: cfg.buffRegion, buff: cfg.buff, boosterBox: cfg.boosterBox },
+    buffSearchArea: area,
+    arrows: buffs.arrows,
+    row,
+    iconCounts: row && !row.manual ? [0, 1, 2].map(l => iconCount(row, l, MAX_SLOTS)) : null,
+    slots,                                  // 칸마다 찾은 숫자 덩어리·최종 판독값
+    reads: reads.map(r => ({ text: r.text, sec: r.sec, exact: r.exact, min: r.min, slot: r.k, line: r.line })),
+    timers: buffs.timers.map(t => ({ id: t.id, exact: t.exact, left: Math.round(buffLeft(t, Date.now())), min: t.min, text: t.text, hits: t.hits, box: t.box })),
+    booster: { box: booster.box, raw: booster.raw, value: booster.value },
+    rune: { autoMinimap: rune.mm, manualMinimap: cfg.minimap, present: rune.present, centroid: rune.centroid, pixels: rune.count, blobs: rune.blobs, rejected: rune.rejected },
+    recentLog: [...$('log').children].slice(0, 40).map(d => d.textContent),
+  };
+  download(new Blob([JSON.stringify(info, null, 2)], { type: 'application/json' }), `maple-diag-${stamp}.json`);
+  log(`🩺 진단 저장: maple-diag-${stamp}.png / .json (다운로드 폴더) · 이 화면 판독 ${reads.map(r => r.exact ? r.text : r.text + '분').join(', ') || '없음'}`);
+}
+// dbg: 배열을 넘기면 칸마다 무엇을 찾았는지 기록 (진단 저장용)
+function readSlots(row, dbg = null) {
+  const lines = Math.max(1, Math.round(row.h / row.pitchY)), cols = Math.min(MAX_SLOTS, Math.floor(row.w / row.pitchX));
+  const out = [];
+  for (let line = 0; line < lines; line++) for (let k = 0, n = iconCount(row, line, cols); k < n; k++) {
+    const box = { x: Math.round(row.iconRight - (k + 1) * row.pitchX), y: Math.round(row.y + line * row.pitchY), w: Math.round(row.pitchX), h: Math.round(row.pitchY) };
+    if (box.x < 0 || box.y + box.h > frame.height) continue;
+    // 오른쪽 아래 작은 숫자는 남은 시간이 아니라(겹친 개수 등) 제외. 칸에 숫자가 여러 개면 가운데 숫자 우선
+    const nums = digitGroups(box, box.h * 0.243).filter(r => !(r.x > box.w * 0.5 && r.y > box.h * 0.55));
+    const center = nums.find(r => r.y <= box.h * 0.55);
+    // 가운데 숫자가 없으면 왼쪽 아래 작은 숫자(남은 분). 아이콘 그림과 붙은 글자는 떼어 낸 결과에서 빠지므로
+    // ("25"가 "5"로 읽힘) 모양을 직접 대 보는 방식을 먼저 쓰고, 못 찾을 때만 떼어 낸 글자 사용
+    let text = center ? center.text : readCornerDigits(box) || nums.find(r => r.x < box.w * 0.5)?.text;
+    // 10분 미만은 가운데 M:SS로 바뀌므로 왼쪽 아래 분 표시는 항상 두 자리 이상. 한 자리만 읽혔다면
+    // 아직 모르는 모양의 숫자가 있다는 뜻("24"가 "2"로 읽힘)이라 잘못된 분으로 잡지 않게 버림
+    if (!center && text?.length < 2) text = null;
+    dbg?.push({ line, k, box, groups: nums.map(r => `${r.text}@${r.x},${r.y}`), center: center?.text || null, read: text || null });
+    if (!text) continue;
+    const t = digitsToTime(text, !center);
+    if (t.sec > 0) out.push({ text, ...t, k, line, box });
+  }
+  // 화살표 없는 넘친 줄은 첫 줄이 꽉 찼을 때만 생김. 다음 화살표가 없어 아래를 넉넉히 읽은 경우,
+  // 첫 줄 왼쪽 끝 근처 칸까지 숫자가 있지 않으면 아래 줄 숫자는 게임 화면 것으로 보고 버림
+  const firstFull = out.some(r => r.line === 0 && r.k >= MAX_SLOTS - 3);
+  return out.filter(r => r.line === 0 || row.bounded || firstFull);
+}
+
+function checkBuffs(now) {
+  const C = cfg.buff;
+  if (!C.enabled || now - buffs.lastRead < BUFF_OCR_MS) return;
+  buffs.lastRead = now;
+  buffs.row = buffRow();
+  if (!buffs.row) return; // 줄을 못 찾으면 이번엔 건너뜀 (가려진 동안은 기존 타이머가 기다림)
+  const bb = cfg.boosterBox || booster.box, r = buffs.row;
+  // 직접 지정한 영역은 칸 격자를 모르므로 영역 안 숫자를 모두 가운데 숫자(초)로 읽음. 숫자 높이는 영역 높이로 짐작
+  const reads = r.manual
+    ? digitGroups(r, Math.min(r.h, 37) * 0.243).map(n => ({ text: n.text, ...digitsToTime(n.text, false), box: { x: r.x + n.x, y: r.y + n.y, w: n.w, h: n.h } })).filter(n => n.sec > 0)
+    : readSlots(r);
+  trackBuffs(reads.filter(x => !(bb && overlaps(x.box, bb))), now); // 부스터 타이머는 제외
+}
+// 읽은 숫자 r이 타이머 t와 같은 버프면 t에 덮어쓸 값, 아니면 null.
+// 왼쪽 아래 분 표시("N")는 초를 알 수 없으므로 초로 계산하지 않고 "약 N분"으로만 들고 있다가,
+// 같은 칸 숫자가 가운데 M:SS로 바뀌는 순간부터 정확한 초로 이어서 셈
+function fitRead(r, t, now) {
+  if (t.exact && r.exact) return Math.abs(r.sec - buffLeft(t, now)) <= 3 ? { value: r.sec } : null;
+  if (!t.exact && !r.exact) return r.min === t.min || r.min === t.min - 1 ? { min: r.min } : null; // 분은 그대로거나 1 줄어듦
+  if (!t.exact && r.exact) // 분 표시 → 초 표시로 바뀜: 같은 칸이고 남은 시간이 그 분 근처일 때만
+    return dist(r.box, t.box) < r.box.w * 0.6 && r.sec <= t.min * 60 + 60 ? { value: r.sec, exact: true } : null;
+  return null; // 초 표시 → 분 표시는 생기지 않음 (버프를 다시 쓴 경우는 새 버프로 처리)
+}
+const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+const center = (b) => [b.x + b.w / 2, b.y + b.h / 2];
+const dist = (a, b) => { const [ax, ay] = center(a), [bx, by] = center(b); return Math.hypot(ax - bx, ay - by); };
+
+function trackBuffs(reads, now) {
+  const C = cfg.buff, timers = buffs.timers, used = new Set();
+  // 1) 남은 시간이 예상대로 이어지는 숫자 = 같은 버프 (가까운 칸 우선)
+  const pairs = [];
+  for (const r of reads) for (const t of timers) {
+    const fit = fitRead(r, t, now);
+    if (fit) pairs.push({ r, t, fit, cost: (fit.value != null && t.exact ? Math.abs(fit.value - buffLeft(t, now)) : 0) + dist(r.box, t.box) / 100 });
+  }
+  pairs.sort((a, b) => a.cost - b.cost);
+  const matchedR = new Set();
+  for (const { r, t, fit } of pairs) {
+    if (used.has(t) || matchedR.has(r)) continue;
+    used.add(t); matchedR.add(r);
+    if (fit.exact && !t.exact) log(`⏱ 버프 남은 시간 초 단위로 전환 (${r.text})`);
+    Object.assign(t, fit, { lastSeen: now, box: r.box, text: r.text, hits: t.hits + 1 });
+    if (t.hits === 2) log(`✅ 버프 감지 (${t.exact ? r.text : `약 ${t.min}분`})`);
+  }
+  for (const r of reads) {
+    if (matchedR.has(r)) continue;
+    // 2) 같은 칸에서 숫자가 늘었으면 버프를 다시 쓴 것 (잘못 읽은 숫자로 착각하지 않게 "분:초"로 읽힌 경우만)
+    const same = r.exact && timers.find(t => !used.has(t) && t.exact && t.hits >= 2 && dist(r.box, t.box) < Math.min(r.box.w, r.box.h) * 0.5 && r.sec > buffLeft(t, now) + 3);
+    if (same) {
+      used.add(same);
+      Object.assign(same, { value: r.sec, lastSeen: now, box: r.box, text: r.text, warned: false });
+      log(`✅ 버프 갱신 (${r.text})`);
+      continue;
+    }
+    // 3) 새 버프 후보: 다음 읽기에서도 이어지는 숫자가 나와야(hits 2) 진짜 버프로 인정 → 잘못 읽은 숫자 제외
+    timers.push({ id: buffs.nextId++, exact: r.exact, value: r.exact ? r.sec : null, min: r.min, lastSeen: now, box: r.box, text: r.text,
+                  warned: false, hits: 1, thumb: iconThumb(r.box) });
+  }
+  // 4) 안 보이는 타이머: (초 단위로 세던 버프가) 거의 끝났으면 목록에서 빼고, 아니면 가려진 것으로 보고 잠시 기다림
+  buffs.timers = timers.filter(t => {
+    if (used.has(t) || t.lastSeen === now) return true;
+    if (t.exact && buffLeft(t, now) <= 4) { if (t.hits >= 2) log(`버프 끝남 (${t.text})`); return false; }
+    return now - t.lastSeen < BUFF_GRACE_MS;
+  });
+  // 5) 종료 N초 전 알림: 같이 쓴 버프들은 1~2초 차이로 끝나므로 버프마다 알리지 않고 한 번만 알림.
+  //    알릴 때가 된 버프가 있으면, 그보다 몇 초 안에 끝나는 버프들까지 함께 알린 것으로 처리
+  if (C.warnBefore <= 0) return;
+  const live = buffs.timers.filter(t => t.exact && t.hits >= 2 && !t.warned && buffLeft(t, now) > 0);
+  const due = live.filter(t => buffLeft(t, now) <= C.warnBefore);
+  if (!due.length) return;
+  const left = Math.min(...due.map(t => buffLeft(t, now)));
+  const group = live.filter(t => buffLeft(t, now) <= C.warnBefore + BUFF_GROUP_SEC);
+  group.forEach(t => { t.warned = true; });
+  // 함께 꺼지는 버프가 설정한 개수보다 적으면 알리지 않음 (예: 쿠폰·비약을 같이 쓴 묶음만 알림)
+  if (group.length < Math.max(1, C.minCount)) { log(`버프 ${group.length}개 종료 예정 · ${C.minCount}개 미만이라 알리지 않음`); return; }
+  buffs.lastAlertAt = now;
+  speak(`버프 종료 ${Math.max(1, Math.round(left))}초 전`);
+  log(`⏳ 버프 종료 ${Math.round(left)}초 전 (버프 ${group.length}개)`); flash('buffPanel');
+}
+// 썸네일: 자동 모드는 아이콘 칸 그대로, 직접 지정 모드는 숫자 둘레 정사각형
+function iconThumb(b) {
+  const side = Math.max(b.w, b.h * 2.6), [cx, cy] = center(b);
+  const r = buffs.row.manual ? { x: Math.max(0, cx - side / 2), y: Math.max(0, cy - side / 2), w: side, h: side } : b;
+  const c = document.createElement('canvas'); c.width = c.height = 56;
+  c.getContext('2d').drawImage(frame, r.x, r.y, r.w, r.h, 0, 0, 56, 56);
+  return c.toDataURL();
+}
+
+// ---------- 룬 ----------
+function debounce(st, raw, need = STREAK) {
+  if (raw === st.present) { st.streak = 0; return false; }
+  if (++st.streak < need) return false;
+  st.present = raw; st.streak = 0; return true; // 상태 변경됨
+}
+
+function checkRune(now) {
+  const R = cfg.rune;
+  if (!R.enabled) { rune.count = 0; rune.centroid = null; return; }
+  const m = runeRegion(now);
+  if (!m) { rune.count = 0; rune.centroid = null; return; }
+  const d = fctx.getImageData(m.x, m.y, m.w, m.h).data, [cr, cg, cb] = RUNE_COLOR, tol2 = R.tol * R.tol;
+  // 1) 룬 색과 비슷한 픽셀 표시
+  const mask = new Uint8Array(m.w * m.h);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    const dr = d[i] - cr, dg = d[i + 1] - cg, db = d[i + 2] - cb;
+    if (dr * dr + dg * dg + db * db <= tol2) mask[p] = 1;
+  }
+  // 2) 붙어 있는 픽셀끼리 덩어리로 묶고, 룬 아이콘다운 크기/모양인 덩어리만 인정
+  const blob = findRuneBlob(mask, m.w, m.h, R);
+  rune.count = blob.total; rune.blobs = blob.accepted; rune.rejected = blob.rejected;
+  rune.centroid = blob.best ? [m.x + blob.best.cx, m.y + blob.best.cy] : null;
+  // 3) 나타날 때는 R.frames번 연속으로 보여야 인정 (잠깐 스친 보라색 무시)
+  const changed = debounce(rune, !!blob.best, blob.best ? R.frames : STREAK);
+  if (changed && rune.present) { rune.lastAlert = now; speak(R.message); log(`🔮 룬 감지 (${blob.best.n}px, ${blob.best.w}×${blob.best.h})`); flash('runePanel'); }
+  else if (changed) log('룬 사라짐');
+  else if (rune.present && R.repeat > 0 && now - rune.lastAlert >= R.repeat * 1000) { rune.lastAlert = now; speak(R.message); log('🔮 룬 반복 알림'); }
+}
+
+// 마스크에서 서로 붙어 있는 픽셀 덩어리들을 찾음 (8방향: 안티앨리어싱으로 끊긴 대각선도 한 덩어리로)
+function components(mask, W, H) {
+  const seen = new Uint8Array(mask.length), stack = [], out = [];
+  for (let start = 0; start < mask.length; start++) {
+    if (!mask[start] || seen[start]) continue;
+    let n = 0, sx = 0, sy = 0, x0 = W, y0 = H, x1 = 0, y1 = 0;
+    seen[start] = 1; stack.push(start);
+    while (stack.length) {
+      const p = stack.pop(), x = p % W, y = (p / W) | 0;
+      n++; sx += x; sy += y;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy, q = ny * W + nx;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && mask[q] && !seen[q]) { seen[q] = 1; stack.push(q); }
+      }
+    }
+    out.push({ n, sx, sy, x0, y0, x1, y1 });
+  }
+  return out;
+}
+// 룬 아이콘 조건(픽셀 수, 크기, 가로세로 비율, 채움 비율)에 맞는 덩어리 중 가장 큰 것을 고름
+function findRuneBlob(mask, W, H, R) {
+  let total = 0, accepted = 0, rejected = 0, best = null;
+  for (const { n, sx, sy, x0, y0, x1, y1 } of components(mask, W, H)) {
+    total += n;
+    if (n < R.minPx) continue; // 점 몇 개짜리 잡음은 판정 대상에서도 제외
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, ratio = w / h, fill = n / (w * h);
+    const ok = n <= R.maxPx && w <= R.maxSize && h <= R.maxSize && ratio >= 0.4 && ratio <= 2.5 && fill >= 0.25;
+    if (!ok) { rejected++; continue; }
+    accepted++;
+    if (!best || n > best.n) best = { n, w, h, cx: sx / n, cy: sy / n };
+  }
+  return { total, accepted, rejected, best };
+}
+// 미니맵 지도 칸의 흰 테두리(2px 밝은 회백색 사각형)를 찾아 그 안쪽 영역을 돌려줌. 못 찾으면 null
+function findMinimapFrame() {
+  const W = Math.round(frame.width * 0.45), H = Math.round(frame.height * 0.5);
+  const d = fctx.getImageData(0, 0, W, H).data;
+  const bright = new Uint8Array(W * H);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
+    if (mn >= 185 && mx - mn <= 45) bright[p] = 1;
+  }
+  // 가로로 길게 이어진 밝은 줄 (위·아래 테두리 후보)
+  const runs = [];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W;) {
+      if (!bright[y * W + x]) { x++; continue; }
+      let e = x; while (e + 1 < W && bright[y * W + e + 1]) e++;
+      if (e - x + 1 >= 60) runs.push({ y, x0: x, x1: e });
+      x = e + 1;
+    }
+  }
+  const colFill = (x, y0, y1) => { let n = 0; for (let y = y0; y <= y1; y++) n += bright[y * W + x] || bright[y * W + x + 1] || bright[y * W + x - 1] ? 1 : 0; return n / (y1 - y0 + 1); };
+  let best = null;
+  for (const t of runs) for (const b of runs) {
+    const h = b.y - t.y;
+    if (h < 30 || Math.abs(t.x0 - b.x0) > 6 || Math.abs(t.x1 - b.x1) > 6) continue;
+    const x0 = Math.min(t.x0, b.x0) - 3, x1 = Math.max(t.x1, b.x1) + 3;
+    // 왼쪽·오른쪽 세로 테두리도 있어야 함 (모서리가 둥글어 가로줄보다 몇 px 바깥)
+    let lx = -1, rx = -1;
+    for (let x = Math.max(1, x0); x <= x0 + 8 && lx < 0; x++) if (colFill(x, t.y + 4, b.y - 4) >= 0.8) lx = x;
+    for (let x = Math.min(W - 2, x1); x >= x1 - 8 && rx < 0; x--) if (colFill(x, t.y + 4, b.y - 4) >= 0.8) rx = x;
+    if (lx < 0 || rx < 0) continue;
+    const area = (rx - lx) * h;
+    if (!best || area > best.area) best = { area, x: lx + 2, y: t.y + 2, w: rx - lx - 3, h: h - 3 };
+  }
+  return best && { x: best.x, y: best.y, w: best.w, h: best.h };
+}
+// 룬은 자동으로 찾은 미니맵 지도 칸 안에서만 찾음 (못 찾으면 직접 지정한 영역)
+function runeRegion(now) {
+  if (now - rune.mmAt >= MM_FIND_MS) { rune.mmAt = now; rune.mm = findMinimapFrame() || rune.mm; }
+  return rune.mm || cfg.minimap;
+}
+
+// ---------- 감시 루프 ----------
+async function tick() {
+  if (busy) return; busy = true;
+  try {
+    if (!(await grab())) return;
+    const now = Date.now();
+    checkRune(now);
+    // 숫자 인식은 느리므로 기다리지 않고 따로 돌림 (각자 busy로 겹치지 않게)
+    checkBooster(now); checkBuffs(now);
+    draw(); renderStates();
+  } finally { busy = false; }
+}
+function startMonitor() {
+  Object.assign(rune, { present: false, streak: 0, count: 0, lastAlert: 0, centroid: null, mm: null, mmAt: 0 });
+  resetBooster(); booster.lastAlertAt = 0; Object.assign(buffs, { timers: [], lastAlertAt: 0, arrows: [], row: null });
+  monitoring = true;
+  timer = setInterval(tick, tickMs());
+  renderShare();
+  speak('감시를 시작합니다'); log('감시 시작');
+}
+function stopMonitor() {
+  if (!monitoring) return;
+  monitoring = false; clearInterval(timer);
+  renderShare();
+  log('감시 중지'); renderStates();
+}
+
+// ---------- 음성 ----------
+function fillVoices() {
+  const voices = speechSynthesis.getVoices(); if (!voices.length) return;
+  const sel = $('voice'); sel.innerHTML = '';
+  voices.slice().sort((a, b) => b.lang.startsWith('ko') - a.lang.startsWith('ko')).forEach(v => sel.add(new Option(`${v.name} (${v.lang})`, v.name)));
+  if (cfg.voice && voices.some(v => v.name === cfg.voice)) sel.value = cfg.voice; else cfg.voice = sel.value;
+}
+speechSynthesis.onvoiceschanged = fillVoices;
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  const v = speechSynthesis.getVoices().find(v => v.name === cfg.voice);
+  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'ko-KR';
+  u.rate = cfg.rate || 1; u.volume = cfg.volume ?? 1;
+  speechSynthesis.speak(u);
+}
+$('btnTestVoice').onclick = () => speak('룬이 생성되었습니다. 부스터 종료 10초 전');
+
+// ---------- UI ----------
+function bindNum(id, get, set) { const el = $(id); el.value = get(); el.oninput = () => { set(parseFloat(el.value) || 0); save(); }; }
+function bindSwitch(id, obj, key) { const el = $(id); el.checked = !!obj[key]; el.onchange = () => { obj[key] = el.checked; save(); renderStates(); }; }
+// 펼치기 버튼: data-more="대상 id"
+function bindMore() {
+  document.querySelectorAll('[data-more]').forEach(btn => {
+    const target = $(btn.dataset.more);
+    const apply = () => { btn.textContent = target.hidden ? '›' : '⌄'; };
+    btn.onclick = () => { target.hidden = !target.hidden; apply(); };
+    apply();
+  });
+}
+const fmt = (s) => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${String(m).padStart(2, '0')}:${ss}`; };
+const clock = (ms) => ms ? new Date(ms).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--';
+const statusHTML = (cls, title, sub = '') => `<i class="dot ${cls}"></i><span><strong>${title}</strong>${sub ? `<small>${sub}</small>` : ''}</span>`;
+
+function initUI() {
+  bindNum('rate', () => cfg.rate, v => cfg.rate = v);
+  bindNum('tick', () => cfg.tick, v => cfg.tick = v);
+  $('tick').onchange = () => { if (monitoring) { stopMonitor(); startMonitor(); } };
+  bindNum('ocrThresh', () => cfg.ocrThresh, v => cfg.ocrThresh = v);
+  bindNum('volume', () => cfg.volume, v => { cfg.volume = v; $('volumeLabel').textContent = Math.round(v * 100) + '%'; });
+  $('volumeLabel').textContent = Math.round(cfg.volume * 100) + '%';
+  $('voice').onchange = () => { cfg.voice = $('voice').value; save(); };
+
+  const R = cfg.rune;
+  bindSwitch('runeOn', R, 'enabled');
+  bindNum('runeTol', () => R.tol, v => R.tol = v);
+  bindNum('runeMinPx', () => R.minPx, v => R.minPx = v);
+  bindNum('runeMaxPx', () => R.maxPx, v => R.maxPx = v);
+  bindNum('runeMaxSize', () => R.maxSize, v => R.maxSize = v);
+  bindNum('runeFrames', () => R.frames, v => R.frames = Math.max(1, Math.round(v)));
+  bindNum('runeRepeat', () => R.repeat, v => R.repeat = v);
+  $('runeMsg').value = R.message; $('runeMsg').oninput = () => { R.message = $('runeMsg').value; save(); };
+  $('runeSwatch').style.background = `rgb(${RUNE_COLOR})`;
+
+  const B = cfg.booster;
+  bindSwitch('boostOn', B, 'enabled');
+  bindSwitch('boostEnd', B, 'alertOnEnd');
+  bindNum('boostWarn', () => B.warnBefore, v => B.warnBefore = v);
+  $('btnBoostRefind').onclick = () => { resetBooster(); log('부스터 타이머 다시 찾는 중'); renderStates(); };
+  $('btnBoostAuto').onclick = () => { cfg.boosterBox = null; resetBooster(); save(); log('부스터 타이머를 자동으로 찾습니다'); renderStates(); };
+
+  const F = cfg.buff;
+  bindSwitch('buffOn', F, 'enabled');
+  bindNum('buffWarn', () => F.warnBefore, v => F.warnBefore = v);
+  bindNum('buffMinCount', () => F.minCount, v => F.minCount = Math.max(1, Math.round(v)));
+  $('btnDiag').onclick = saveDiagnostics;
+  $('btnBuffAuto').onclick = () => { cfg.buffRegion = null; buffs.timers = []; save(); log(`버프 감시 줄: 자동(${BUFF_ROW}번째 화살표)`); renderStates(); };
+
+  $('btnHelp').onclick = () => { $('help').hidden = !$('help').hidden; };
+  bindMore();
+}
+
+function renderStates() {
+  const now = Date.now();
+  const offOr = (enabled, extra) => !enabled ? statusHTML('off', '꺼짐') : !monitoring ? statusHTML('', '화면 공유 필요') : extra();
+
+  // 룬
+  const R = cfg.rune;
+  $('mmInfo').textContent = rune.mm ? `자동 ${rune.mm.w}×${rune.mm.h}` : cfg.minimap ? `${cfg.minimap.w}×${cfg.minimap.h}` : '자동';
+  $('runeOnLabel').textContent = R.enabled ? '켜짐' : '꺼짐';
+  $('dot-rune').classList.toggle('on', R.enabled);
+  $('runeState').innerHTML = !R.enabled ? statusHTML('off', '꺼짐') : !monitoring ? statusHTML('', '화면 공유 필요')
+    : !rune.mm && !cfg.minimap ? statusHTML('warn', '미니맵을 못 찾음 (직접 지정)') : statusHTML('ok', '감시 중');
+  const det = $('runeDetect');
+  det.classList.toggle('hit', monitoring && rune.present);
+  det.textContent = !monitoring ? '감지 없음' : rune.present ? '룬 있음' : rune.streak ? `확인 중 ${rune.streak}/${R.frames}` : '감지 없음';
+  $('runeLast').textContent = clock(rune.lastAlert);
+  $('runeDetail').textContent = monitoring ? `같은 색 픽셀 ${rune.count}개 · 룬 모양 덩어리 ${rune.blobs ?? 0}개 · 걸러낸 덩어리 ${rune.rejected ?? 0}개` : '';
+
+  // 부스터
+  const B = cfg.booster, located = cfg.boosterBox || booster.box, left = boosterLeft(now);
+  $('boostOnLabel').textContent = B.enabled ? '켜짐' : '꺼짐';
+  $('dot-booster').classList.toggle('on', B.enabled);
+  $('boostRaw').textContent = monitoring && booster.raw ? booster.raw : '--';
+  $('boostLeft').textContent = monitoring && left != null ? fmt(left) : '--';
+  $('boostLast').textContent = clock(booster.lastAlertAt);
+  $('boostState').innerHTML = offOr(B.enabled, () => !located ? statusHTML('warn', '타이머 찾는 중', '부스터를 쓰면 자동으로 잡힙니다')
+    : statusHTML('ok', '추적 중', cfg.boosterBox ? '직접 지정한 위치' : '자동으로 찾은 위치'));
+
+  // 버프
+  const F = cfg.buff, list = buffs.timers.filter(t => t.hits >= 2); // 확인된 버프만 표시
+  $('buffOnLabel').textContent = F.enabled ? '켜짐' : '꺼짐';
+  $('dot-buffs').classList.toggle('on', F.enabled);
+  $('buffCount').textContent = monitoring ? `${list.length}개` : '--';
+  $('buffLast').textContent = clock(buffs.lastAlertAt);
+  $('buffState').innerHTML = offOr(F.enabled, () => !buffs.row ? statusHTML('warn', `${BUFF_ROW}번째 줄을 못 찾음`, `오른쪽 끝 화살표 ${buffs.arrows.length}개 보임`)
+    : statusHTML('ok', '인식 중', `${cfg.buffRegion ? '직접 지정한 줄' : `${BUFF_ROW}번째 화살표 줄`} · 숫자 ${list.length}개 읽음`));
+  renderBuffList(monitoring ? list : [], now);
+}
+// 버프 목록: 매초 통째로 다시 그리면 썸네일이 깜빡이므로, 버프마다 칸을 하나씩 두고 남은 시간만 고침
+function renderBuffList(list, now) {
+  const box = $('buffList'), keep = new Set();
+  const sorted = list.slice().sort((a, b) => buffLeft(a, now) - buffLeft(b, now));
+  sorted.forEach((t, i) => {
+    const id = 'tb-' + t.id; keep.add(id);
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement('div'); el.id = id;
+      el.innerHTML = `<img class="thumb" src="${t.thumb}" alt=""><div class="stat"><span class="lbl"></span><span class="val"></span></div>`;
+    }
+    el.className = 'tbuff';
+    el.querySelector('.lbl').textContent = '남은 시간';
+    el.querySelector('.val').textContent = t.exact ? fmt(buffLeft(t, now)) : `약 ${t.min}분`;
+    if (box.children[i] !== el) box.insertBefore(el, box.children[i] || null); // 순서가 바뀐 경우만 옮김
+  });
+  [...box.children].forEach(el => { if (!keep.has(el.id)) el.remove(); });
+}
+function flash(id) { const el = $(id); if (!el) return; el.classList.add('alert'); setTimeout(() => el.classList.remove('alert'), 3000); }
+
+function log(msg) {
+  const d = document.createElement('div');
+  d.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+  $('log').prepend(d);
+  while ($('log').children.length > 200) $('log').lastChild.remove();
+}
+
+initUI(); fillVoices(); renderShare(); renderStates();
+</script>
+</body>
+</html>
