@@ -277,6 +277,8 @@ const BUFF_ROW = 3;          // 오른쪽 끝 ">" 화살표 기준으로 위에�
 
 // ---------- 설정 ----------
 const RUNE_COLOR = [201, 118, 225]; // 미니맵 룬 아이콘 색 (고정)
+const RUNE_MEAN_TOL = 28;   // 덩어리 평균 색이 룬 색과 이만큼 이내여야 룬 (다른 색 아이콘의 가장자리 번짐 걸러냄)
+const RUNE_MIN_SIDE = 4;    // 룬 아이콘은 최소 4×4px (실제 6×6 정도)
 let cfg = {
   tick: 1, rate: 1.1, volume: 1, voice: '', ocrThresh: 185,
   boosterBox: null, buffRegion: null, // boosterBox·buffRegion: 직접 지정했을 때만 (없으면 자동)
@@ -896,7 +898,7 @@ function checkRune(now) {
     if (dr * dr + dg * dg + db * db <= tol2) mask[p] = 1;
   }
   // 2) 붙어 있는 픽셀끼리 덩어리로 묶고, 룬 아이콘다운 크기/모양인 덩어리만 인정
-  const blob = findRuneBlob(mask, m.w, m.h, R);
+  const blob = findRuneBlob(mask, m.w, m.h, R, d);
   rune.count = blob.total; rune.blobs = blob.accepted; rune.rejected = blob.rejected;
   rune.centroid = blob.best ? [m.x + blob.best.cx, m.y + blob.best.cy] : null;
   // 3) 나타날 때는 R.frames번 연속으로 보여야 인정 (잠깐 스친 보라색 무시)
@@ -927,13 +929,25 @@ function components(mask, W, H) {
   return out;
 }
 // 룬 아이콘 조건(픽셀 수, 크기, 가로세로 비율, 채움 비율)에 맞는 덩어리 중 가장 큰 것을 고름
-function findRuneBlob(mask, W, H, R) {
+// (d: 미니맵 픽셀. 덩어리 평균 색 확인용)
+function findRuneBlob(mask, W, H, R, d) {
   let total = 0, accepted = 0, rejected = 0, best = null;
+  // 덩어리에 속한 픽셀들의 평균 색이 룬 색에서 얼마나 떨어졌는지
+  const meanDist = (x0, y0, x1, y1) => {
+    let r = 0, g = 0, b = 0, k = 0;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const p = y * W + x; if (!mask[p]) continue;
+      r += d[p * 4]; g += d[p * 4 + 1]; b += d[p * 4 + 2]; k++;
+    }
+    return Math.hypot(r / k - RUNE_COLOR[0], g / k - RUNE_COLOR[1], b / k - RUNE_COLOR[2]);
+  };
   for (const { n, sx, sy, x0, y0, x1, y1 } of components(mask, W, H)) {
     total += n;
     if (n < R.minPx) continue; // 점 몇 개짜리 잡음은 판정 대상에서도 제외
     const w = x1 - x0 + 1, h = y1 - y0 + 1, ratio = w / h, fill = n / (w * h);
-    const ok = n <= R.maxPx && w <= R.maxSize && h <= R.maxSize && ratio >= 0.4 && ratio <= 2.5 && fill >= 0.25;
+    // 룬 아이콘은 정사각형에 가까운 4px 이상 덩어리이고, 평균 색이 룬 색에 가까움
+    const ok = n <= R.maxPx && w <= R.maxSize && h <= R.maxSize && w >= RUNE_MIN_SIDE && h >= RUNE_MIN_SIDE
+      && ratio >= 0.6 && ratio <= 1.7 && fill >= 0.25 && meanDist(x0, y0, x1, y1) <= RUNE_MEAN_TOL;
     if (!ok) { rejected++; continue; }
     accepted++;
     if (!best || n > best.n) best = { n, w, h, cx: sx / n, cy: sy / n };
