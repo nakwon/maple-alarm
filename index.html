@@ -152,7 +152,7 @@
       </div>
       <div class="more" id="runeMore" hidden>
         <div class="fields">
-          <label class="field">룬 색 <span>rgb(201, 118, 225) 고정</span></label>
+          <label class="field">룬 색 <span>rgb(221, 102, 255) 고정</span></label>
           <label class="field">색 허용 오차 <input type="number" id="runeTol" min="1" max="200"></label>
           <label class="field">덩어리 최소 픽셀 수 <input type="number" id="runeMinPx" min="1"></label>
           <label class="field">덩어리 최대 픽셀 수 <input type="number" id="runeMaxPx" min="1"></label>
@@ -273,7 +273,7 @@ const BUFF_GROUP_SEC = 10;   // 종료 N초 전 알림을 할 때, 이 시간 �
 const BUFF_ROW = 3;          // 오른쪽 끝 ">" 화살표 기준으로 위에서 몇 번째 줄을 감시할지
 
 // ---------- 설정 ----------
-const RUNE_COLOR = [201, 118, 225]; // 미니맵 룬 아이콘 색 (고정)
+const RUNE_COLOR = [221, 102, 255]; // 미니맵 룬 아이콘(보라 마름모) 안쪽 색 (실제 화면에서 잰 값)
 const RUNE_MEAN_TOL = 28;   // 덩어리 평균 색이 룬 색과 이만큼 이내여야 룬 (다른 색 아이콘의 가장자리 번짐 걸러냄)
 const RUNE_MIN_SIDE = 4;    // 룬 아이콘은 최소 4×4px (실제 6×6 정도)
 let cfg = {
